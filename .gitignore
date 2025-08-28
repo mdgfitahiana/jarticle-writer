@@ -1,0 +1,21 @@
+#Ignorer les environnements virtuels
+.venv/
+env/
+venv/
+
+#Fichiers temporaires Python
+__pycache__/
+*.pyc 
+*.pyo 
+*.pyd
+
+#Cache de Jupyter ou Streamlit
+.ipynb_checkpoints
+.streamlit/
+
+#Fichiers system
+.DS_Store
+Thumbs.db
+
+#Fichiers de log
+*.log
