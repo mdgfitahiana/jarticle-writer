@@ -127,7 +127,7 @@ def crawl_site(seed_url: str, keywords: list, max_depth: int = 1, max_pages: int
             if matched:
                 #tronquer le texte en un snippet de 300 car max (extrait)
                 snippet = re.sub(r"\s+", " ", ltext)
-                snippet = snippet[:300] if len(snippet) > 300 else snippet
+                snippet = snippet[:1500] if len(snippet) > 1500 else snippet
                 results.append({
                     "seed": seed,
                     "url": resp.url,
