@@ -5,6 +5,8 @@ from veille_finance.utils.url_utils import normalize_url, same_domain
 from veille_finance.utils.robots_utils import allowed_by_robots
 from veille_finance.utils.robots_utils import allowed_by_robots
 from veille_finance.utils.parsing import extract_text_and_links
+from veille_finance.utils.ai_relevance import ai_match_result
+
 
 def crawl_site(seed_url: str, keywords: list, max_depth: int = 1, max_pages: int = 25,
                delay: float = 0.5, respect_robots: bool = True):
@@ -33,17 +35,17 @@ def crawl_site(seed_url: str, keywords: list, max_depth: int = 1, max_pages: int
             text, links, title = extract_text_and_links(resp.text, resp.url)
             ltext, lurl = (text or "").lower(), (resp.url or "").lower()
 
-            matched = [kw for kw in keywords if kw.lower() in ltext or kw.lower() in lurl]
+            # Define purpose
+            purpose_text = """
+            Chercher et identifier des informations financières et patrimoniales pertinentes pour le suivi de sociétés cotées,
+            communiqués de presse, rapports annuels, transactions importantes, actualité boursière internationale,
+            données immobilières et produits financiers. L'objectif est de faciliter la veille pour Le Revenu.
+            """
 
-            if matched:
-                snippet = re.sub(r"\s+", " ", ltext)[:1500]
-                results.append({
-                    "seed": seed,
-                    "url": resp.url,
-                    "title": title,
-                    "matched_keywords": ", ".join(sorted(set(matched), key=str.lower)),
-                    "snippet": snippet
-                })
+            # print(text)
+            result = ai_match_result(seed, resp.url, title, text, purpose_text)
+            if result:
+                results.append(result)
 
             pages_processed += 1
 
