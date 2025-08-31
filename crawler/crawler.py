@@ -1,12 +1,12 @@
 import re, time, requests
 from typing import List, Dict
 from collections import deque
-from veille_finance.config import HEADERS, DEFAULT_TIMEOUT
-from veille_finance.utils.url_utils import normalize_url, same_domain
-from veille_finance.utils.robots_utils import allowed_by_robots
-from veille_finance.utils.robots_utils import allowed_by_robots
-from veille_finance.utils.parsing import extract_text_and_links
-from veille_finance.utils.ai_relevance import ai_match_result
+from config import HEADERS, DEFAULT_TIMEOUT
+from utils.url_utils import normalize_url, same_domain
+from utils.robots_utils import allowed_by_robots
+from utils.robots_utils import allowed_by_robots
+from utils.parsing import extract_text_and_links
+from utils.ai_relevance import ai_match_result
 
 
 def crawl_site(seed_url: str, max_depth: int = 1, max_pages: int = 25,

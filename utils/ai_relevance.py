@@ -5,7 +5,7 @@ from langchain_openai import ChatOpenAI
 from langchain.schema import HumanMessage
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 
-from veille_finance.config import CHUNK_SIZE, CHUNK_OVERLAP
+from config import CHUNK_SIZE, CHUNK_OVERLAP
 
 # Initialize LangChain's OpenAI wrapper
 llm = ChatOpenAI(

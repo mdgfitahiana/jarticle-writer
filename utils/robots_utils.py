@@ -1,6 +1,6 @@
 import urllib.robotparser as robotparser
 from urllib.parse import urlparse
-from veille_finance.config import HEADERS
+from config import HEADERS
 
 _robot_cache: dict = {}
 

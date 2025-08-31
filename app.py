@@ -11,8 +11,8 @@ if PARENT_DIR not in sys.path:
 
 import streamlit as st
 import pandas as pd
-from veille_finance.crawler.crawler import crawl_site
-from veille_finance.nlp.extractor import extract_core_sentences
+from crawler.crawler import crawl_site
+from nlp.extractor import extract_core_sentences
 
 
 st.set_page_config(page_title="Veille auto", layout="wide")
