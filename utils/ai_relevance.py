@@ -3,6 +3,9 @@ import streamlit as st
 from typing import List
 from langchain_openai import ChatOpenAI
 from langchain.schema import HumanMessage
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+
+from veille_finance.config import CHUNK_SIZE, CHUNK_OVERLAP
 
 # Initialize LangChain's OpenAI wrapper
 llm = ChatOpenAI(
@@ -11,12 +14,19 @@ llm = ChatOpenAI(
     api_key=st.secrets["OPENAI_API_KEY"]
 )
 
+text_splitter = RecursiveCharacterTextSplitter(
+            chunk_size=CHUNK_SIZE,
+            separators=["\n\n", "\n", ".", "!", "?", ",", " "],
+            chunk_overlap=CHUNK_OVERLAP,
+        )
+
+
 def preprocess_text(text: str, chunk_size: int = 2000) -> List[str]:
     """
     Split text into manageable chunks and lowercase it.
     """
     text = re.sub(r"\s+", " ", text).strip().lower()
-    chunks = [text[i:i+chunk_size] for i in range(0, len(text), chunk_size)]
+    chunks = text_splitter.split_text(text)
     return chunks
 
 def check_relevance_with_ai(text: str, purpose: str) -> bool:
