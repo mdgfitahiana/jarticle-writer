@@ -12,6 +12,8 @@ if PARENT_DIR not in sys.path:
 import streamlit as st
 import pandas as pd
 from veille_finance.crawler.crawler import crawl_site
+from veille_finance.nlp.extractor import extract_core_sentences
+
 
 st.set_page_config(page_title="Veille auto", layout="wide")
 
@@ -49,7 +51,13 @@ if st.button("Lancer le crawl"):
             for i, seed in enumerate(urls, start=1):
                 status.info(f"Crawling {i}/{len(urls)} — {seed}")
                 with st.spinner(f"Exploration de {seed} …"):
-                    all_results.extend(crawl_site(seed, max_depth, max_pages, delay, respect_robots))
+                    crawl_results = crawl_site(seed, [], max_depth, max_pages, delay, respect_robots)
+
+                    # NEW: post-process each crawled page
+                    for r in crawl_results:
+                        if "content" in r and r["content"]:
+                            r["core_sentences"] = extract_core_sentences(r["content"])
+                    all_results.extend(crawl_results)
                 prog.progress(int(i/len(urls)*100))
 
             status.empty(); prog.empty()
@@ -59,7 +67,7 @@ if st.button("Lancer le crawl"):
             else:
                 st.subheader("Pages explorées")
                 df_res = pd.DataFrame(all_results)
-                display_cols = ["seed", "url", "title"]
+                display_cols = ["seed", "url", "title", "core_sentences"]
                 st.dataframe(df_res[display_cols].fillna(""), use_container_width=True)
                 st.download_button("Télécharger résultats", df_res.to_csv(index=False).encode("utf-8"),
                                    "crawl_results.csv", "text/csv")

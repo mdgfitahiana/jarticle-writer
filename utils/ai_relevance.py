@@ -70,6 +70,7 @@ def ai_match_result(seed: str, url: str, title: str, text: str, purpose: str) ->
             "seed": seed,
             "url": url,
             "title": title,
+            "content": text,
             "matched_keywords": "AI-Relevant",
             "snippet": snippet
         }
