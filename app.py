@@ -51,7 +51,7 @@ if st.button("Lancer le crawl"):
             for i, seed in enumerate(urls, start=1):
                 status.info(f"Crawling {i}/{len(urls)} — {seed}")
                 with st.spinner(f"Exploration de {seed} …"):
-                    crawl_results = crawl_site(seed, [], max_depth, max_pages, delay, respect_robots)
+                    crawl_results = crawl_site(seed, max_depth, max_pages, delay, respect_robots)
 
                     # NEW: post-process each crawled page
                     for r in crawl_results:
