@@ -1,6 +1,6 @@
 import re
 import streamlit as st
-from typing import List
+from typing import List, Dict
 from langchain_openai import ChatOpenAI
 from langchain.schema import HumanMessage
 from langchain.text_splitter import RecursiveCharacterTextSplitter
@@ -15,10 +15,10 @@ llm = ChatOpenAI(
 )
 
 text_splitter = RecursiveCharacterTextSplitter(
-            chunk_size=CHUNK_SIZE,
-            separators=["\n\n", "\n", ".", "!", "?", ",", " "],
-            chunk_overlap=CHUNK_OVERLAP,
-        )
+    chunk_size=CHUNK_SIZE,
+    separators=["\n\n", "\n", ".", "!", "?", ",", " "],
+    chunk_overlap=CHUNK_OVERLAP,
+)
 
 
 def preprocess_text(text: str, chunk_size: int = 2000) -> List[str]:
@@ -60,7 +60,7 @@ def check_relevance_with_ai(text: str, purpose: str) -> bool:
             continue
     return False
 
-def ai_match_result(seed: str, url: str, title: str, text: str, purpose: str):
+def ai_match_result(seed: str, url: str, title: str, text: str, purpose: str) -> List[Dict]:
     """
     Wrapper to return a dict similar to previous interface.
     """

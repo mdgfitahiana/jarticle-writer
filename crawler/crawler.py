@@ -1,4 +1,5 @@
 import re, time, requests
+from typing import List, Dict
 from collections import deque
 from veille_finance.config import HEADERS, DEFAULT_TIMEOUT
 from veille_finance.utils.url_utils import normalize_url, same_domain
@@ -9,7 +10,7 @@ from veille_finance.utils.ai_relevance import ai_match_result
 
 
 def crawl_site(seed_url: str, max_depth: int = 1, max_pages: int = 25,
-               delay: float = 0.5, respect_robots: bool = True):
+               delay: float = 0.5, respect_robots: bool = True) -> List[Dict]:
     seed = normalize_url(seed_url)
     results, visited = [], set()
     q = deque([(seed, 0)])

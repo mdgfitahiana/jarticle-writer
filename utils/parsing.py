@@ -1,7 +1,8 @@
+from typing import Set
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin, urldefrag
 
-def extract_text_and_links(html: str, base_url: str):
+def extract_text_and_links(html: str, base_url: str) -> (str, Set, str):
     soup = BeautifulSoup(html, "lxml")
     for tag in soup(["script", "style", "noscript"]):
         tag.decompose()
