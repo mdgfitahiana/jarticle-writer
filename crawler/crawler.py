@@ -8,7 +8,7 @@ from veille_finance.utils.parsing import extract_text_and_links
 from veille_finance.utils.ai_relevance import ai_match_result
 
 
-def crawl_site(seed_url: str, keywords: list, max_depth: int = 1, max_pages: int = 25,
+def crawl_site(seed_url: str, max_depth: int = 1, max_pages: int = 25,
                delay: float = 0.5, respect_robots: bool = True):
     seed = normalize_url(seed_url)
     results, visited = [], set()

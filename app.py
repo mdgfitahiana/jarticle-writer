@@ -23,14 +23,12 @@ with st.sidebar:
     max_pages = st.slider("Pages max par site", 1, 100, 25)
     delay = st.number_input("Délai entre requêtes (s)", 0.0, 5.0, 0.5, 0.1)
     respect_robots = st.checkbox("Respecter robots.txt du site", value=True)
-    show_snippet = st.checkbox("Afficher un extrait (snippet)", value=True)
 
 sheet_url = st.text_input("Colle l'URL du Google Sheet")
-keywords_input = st.text_input("Mots-clés (séparés par des virgules)")
 
 if st.button("Lancer le crawl"):
-    if not sheet_url or not keywords_input:
-        st.error("⚠️ Merci de fournir l'URL et des mots-clés.")
+    if not sheet_url:
+        st.error("⚠️ Merci de fournir l'URL.")
     else:
         try:
             df = pd.read_csv(sheet_url)
@@ -46,24 +44,22 @@ if st.button("Lancer le crawl"):
             st.success(f"{len(urls)} site(s) à crawler.")
             st.table(pd.DataFrame({"URL": urls}))
 
-            keywords = [k.strip() for k in keywords_input.split(",") if k.strip()]
             all_results, prog, status = [], st.progress(0), st.empty()
 
             for i, seed in enumerate(urls, start=1):
                 status.info(f"Crawling {i}/{len(urls)} — {seed}")
                 with st.spinner(f"Exploration de {seed} …"):
-                    all_results.extend(crawl_site(seed, keywords, max_depth, max_pages, delay, respect_robots))
+                    all_results.extend(crawl_site(seed, max_depth, max_pages, delay, respect_robots))
                 prog.progress(int(i/len(urls)*100))
 
             status.empty(); prog.empty()
 
             if not all_results:
-                st.info("Aucun mot-clé trouvé.")
+                st.info("Aucun résultat trouvé.")
             else:
-                st.subheader("Pages contenant des mots-clés")
+                st.subheader("Pages explorées")
                 df_res = pd.DataFrame(all_results)
-                display_cols = ["seed", "url", "title", "matched_keywords"]
-                if show_snippet: display_cols.append("snippet")
+                display_cols = ["seed", "url", "title"]
                 st.dataframe(df_res[display_cols].fillna(""), use_container_width=True)
                 st.download_button("Télécharger résultats", df_res.to_csv(index=False).encode("utf-8"),
                                    "crawl_results.csv", "text/csv")
