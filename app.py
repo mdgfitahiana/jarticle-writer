@@ -1,34 +1,34 @@
 import streamlit as st
-import markdown2
 import pandas as pd
-from text_generation import generate_article
+import markdown2
+from text_generation import generate_article_stream
 from weasyprint import HTML
+
 st.set_page_config(page_title="Veille auto", layout="wide")
 
 # --- Sidebar ---
 st.sidebar.header("Paramètres de génération")
 
 # Download format selection
-download_format = st.sidebar.radio(
+if "download_format" not in st.session_state:
+    st.session_state.download_format = "TXT"
+
+st.session_state.download_format = st.sidebar.radio(
     "Format de téléchargement",
     ("TXT", "PDF"),
-    index=0
+    index=0 if st.session_state.download_format == "TXT" else 1
 )
 
-# Google Sheet URL input
-# app.py snippet
+# Google Sheet URL input (default from secret)
 sheet_url = st.sidebar.text_input(
     "Colle l'URL du Google Sheet",
     value=st.secrets.get("CSV_URL", "")
 )
 
 # --- Session state initialization ---
-if "df" not in st.session_state:
-    st.session_state.df = None
-if "selected_title" not in st.session_state:
-    st.session_state.selected_title = None
-if "generated_article" not in st.session_state:
-    st.session_state.generated_article = None
+for key in ["df", "selected_title", "generated_article"]:
+    if key not in st.session_state:
+        st.session_state[key] = None
 
 # --- Welcome message ---
 if st.session_state.df is None:
@@ -51,6 +51,7 @@ if st.sidebar.button("Obtenir la liste"):
             else:
                 st.session_state.df = df
                 st.session_state.generated_article = None
+                st.session_state.selected_title = None
                 st.success(f"{len(df)} entrées détectées.")
         except Exception as e:
             st.sidebar.error(f"Erreur lecture Google Sheet : {e}")
@@ -59,32 +60,50 @@ if st.sidebar.button("Obtenir la liste"):
 if st.session_state.df is not None:
     st.subheader("Choisir une entrée")
     options = st.session_state.df["title"].dropna().astype(str).tolist()
+
+    # --- Selectbox with change detection ---
+    prev_title = st.session_state.selected_title
     st.session_state.selected_title = st.selectbox(
         "Sélectionnez un titre",
         options,
-        index=options.index(st.session_state.selected_title)
-        if st.session_state.selected_title in options else 0
+        index=options.index(prev_title) if prev_title in options else 0,
+        key="title_select"
     )
 
-    selected_row = st.session_state.df[st.session_state.df["title"] == st.session_state.selected_title].iloc[0]
+    # Clear previous article if selection changed
+    if prev_title != st.session_state.selected_title:
+        st.session_state.generated_article = None
+
+    selected_row = st.session_state.df[
+        st.session_state.df["title"] == st.session_state.selected_title
+    ].iloc[0]
 
     # --- Step 3: Generate article ---
-    if st.button("Générer"):
-        with st.spinner("Génération de l'article en cours..."):
-            st.session_state.generated_article = generate_article(
-                selected_row["seed"],
-                selected_row["title"],
-                selected_row["financial-result"],
-                selected_row["press-release"]
-            )
+    generate_btn = st.button("Générer")
+    article_placeholder = st.empty()
+
+    if generate_btn:
+        st.session_state.generated_article = ""
+
+        def on_new_token(token: str):
+            st.session_state.generated_article += token
+            article_placeholder.markdown(st.session_state.generated_article)
+
+        # Call streaming function
+        generate_article_stream(
+            selected_row["seed"],
+            selected_row["title"],
+            selected_row["financial-result"],
+            selected_row["press-release"],
+            on_new_token
+        )
 
     # --- Step 4: Display and download ---
     if st.session_state.generated_article:
         st.subheader("Article généré")
-        st.write(st.session_state.generated_article)
+        article_placeholder.markdown(st.session_state.generated_article)
 
-        # Download logic
-        if download_format == "TXT":
+        if st.session_state.download_format == "TXT":
             st.download_button(
                 "Télécharger l'article (TXT)",
                 st.session_state.generated_article.encode("utf-8"),
@@ -92,9 +111,7 @@ if st.session_state.df is not None:
                 "text/plain"
             )
         else:  # PDF
-            # Convert markdown text to HTML
             html = markdown2.markdown(st.session_state.generated_article)
-            # Generate PDF bytes
             pdf_bytes = HTML(string=html).write_pdf()
             st.download_button(
                 "Télécharger l'article (PDF)",
