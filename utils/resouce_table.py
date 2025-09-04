@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 from utils.ai_relevance import llm, text_splitter  # re-use your langchain setup
-from utils.check_for_change import RESOURCES_KEY
+import urllib.parse
 
 # ------------------------------------------------------------------------------
 # LLM initialization (separate instance for summarization)
@@ -40,54 +40,64 @@ def summarize_content(text: str) -> str:
 # ------------------------------------------------------------------------------
 # Create resource table for a given URL
 # ------------------------------------------------------------------------------
-def get_resource_table_for_url(url: str) -> pd.DataFrame:
-    """
-    Generate a table of resources for a given URL.
+# def get_resource_table_for_url(url: str) -> pd.DataFrame:
+#     """
+#     Generate a table of resources for a given URL.
 
-    Columns:
-    - Liste des entreprises
-    - Type de l'article
-    - Contenu (résumé par IA)
-    - Dernière date de parution
-    - Lien de l'article
-    - Proposer un article à générer (placeholder link)
-    - Article généré (empty for now)
-    """
-    headers = [
-        "Liste des entreprises",
-        "Type de l'article",
-        "Contenu (résumé par IA)",
-        "Dernière date de parution",
-        "Lien de l'article",
-        "Proposer un article à générer",
-        "Article généré"
-    ]
+#     Columns:
+#     - Liste des entreprises
+#     - Type de l'article
+#     - Contenu (résumé par IA)
+#     - Dernière date de parution
+#     - Lien de l'article
+#     - Proposer un article à générer (placeholder link)
+#     - Article généré (empty for now)
+#     """
+#     headers = [
+#         "Liste des entreprises",
+#         "Type de l'article",
+#         "Contenu (résumé par IA)",
+#         "Dernière date de parution",
+#         "Lien de l'article",
+#         "Proposer un article à générer",
+#         "Article généré"
+#     ]
 
-    resources = st.cache_data.get(RESOURCES_KEY, [])
-    rows = []
+#     resources = st.cache_data.get(RESOURCES_KEY, [])
+#     rows = []
 
-    for r in resources:
-        # Match by URL or parent URLs
-        pdf_info = r.get("pdf_source", {})
-        urls_to_match = [r.get("url")] + pdf_info.get("parent_urls", [])
-        if url in urls_to_match:
-            entreprise = r.get("seed", "")
-            article_type = r.get("title", "")
-            content = r.get("content", "")
-            summary = summarize_content(content) if content else ""
-            last_date = r.get("last_date", "")  # if you have this info in crawler
-            link = r.get("url", "")
-            generate_link = "https://new.tab.com/new/generation"
-            article_generated = ""  # placeholder
+#     for r in resources:
+#         # Match by URL or parent URLs
+#         pdf_info = r.get("pdf_source", {})
+#         urls_to_match = [r.get("url")] + pdf_info.get("parent_urls", [])
+#         if url in urls_to_match:
+#             entreprise = r.get("seed", "")
+#             article_type = r.get("title", "")
+#             content = r.get("content", "")
+#             summary = summarize_content(content) if content else ""
+#             last_date = r.get("last_date", "")  # if you have this info in crawler
+#             link = r.get("url", "")
 
-            rows.append([
-                entreprise,
-                article_type,
-                summary,
-                last_date,
-                link,
-                generate_link,
-                article_generated
-            ])
+#             article_generated = ""  # placeholder
+#             base_url = "http://localhost:8502/"
+#             params = {
+#                 "seed": entreprise,
+#                 "title": article_type,
+#                 "url": link
+#             }
+#             query_string = urllib.parse.urlencode(params)
+#             generate_link = f"{base_url}?{query_string}"
 
-    return pd.DataFrame(rows, columns=headers)
+
+
+#             rows.append([
+#                 entreprise,
+#                 article_type,
+#                 summary,
+#                 last_date,
+#                 link,
+#                 generate_link,
+#                 article_generated
+#             ])
+
+#     return pd.DataFrame(rows, columns=headers)

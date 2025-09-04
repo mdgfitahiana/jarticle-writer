@@ -8,7 +8,7 @@ from utils.url_utils import normalize_url, same_domain, is_pdf_url
 from utils.robots_utils import allowed_by_robots
 from utils.parsing import extract_text_and_links, extract_pdf_text
 from utils.ai_relevance import check_relevance_with_ai
-from utils.date_utils import get_date_from_headers, get_date_from_html
+from utils.date_utils import get_date_from_headers, get_date_from_html, get_date_from_text_ai
 
 def crawl_site(seed_url: str, max_depth: int = 1, max_pages: int = 25,
                delay: float = 0.5, respect_robots: bool = True) -> List[Dict]:
@@ -51,7 +51,12 @@ def crawl_site(seed_url: str, max_depth: int = 1, max_pages: int = 25,
             if is_pdf_url(url, content_type):
                 pdf_bytes = resp.content
                 pdf_text = extract_pdf_text(pdf_bytes)
-                last_date = get_date_from_headers(resp)
+
+                # --- AI date extraction ---
+                last_date = get_date_from_headers(resp)  # fallback
+                ai_date = get_date_from_text_ai(pdf_text)
+                if ai_date != "Non trouvé":
+                    last_date = ai_date
 
                 is_relevant = check_relevance_with_ai(pdf_text, """
                     Classifier le document PDF parmi :
@@ -79,7 +84,12 @@ def crawl_site(seed_url: str, max_depth: int = 1, max_pages: int = 25,
             # ------------------- HTML -------------------
             elif "html" in content_type:
                 text, links, title = extract_text_and_links(resp.text, resp.url)
-                last_date = get_date_from_html(resp.text, resp)
+
+                # --- AI date extraction ---
+                last_date = get_date_from_html(resp.text, resp)  # fallback
+                ai_date = get_date_from_text_ai(text)
+                if ai_date != "Non trouvé":
+                    last_date = ai_date
 
                 is_relevant = check_relevance_with_ai(text, """
                     Identifier et classifier les informations financières et patrimoniales :
@@ -117,37 +127,3 @@ def crawl_site(seed_url: str, max_depth: int = 1, max_pages: int = 25,
 
     print(f"[CRAWLER] Finished. Processed {pages_processed} pages. Results found: {len(results)}")
     return results
-
-
-
-
-"""
-[
-    {
-        "seed": "https://example.com",
-        "url": "https://example.com/report.pdf",
-        "title": "PDF Document",
-        "content": "Full PDF text here...",
-        "matched_keywords": "AI-Relevant",
-        "snippet": "First 1500 characters of PDF...",
-        "last_date": "Wed, 28 Aug 2025 12:34:56 GMT",  # extracted from headers
-        "pdf_source": {
-            "pdf_url": "https://example.com/report.pdf",
-            "parent_urls": ["https://example.com/reports"]
-        }
-    },
-    {
-        "seed": "https://example.com",
-        "url": "https://example.com/news.html",
-        "title": "Quarterly Financial News",
-        "content": "Full HTML page text here...",
-        "matched_keywords": "AI-Relevant",
-        "snippet": "First 1500 characters of HTML...",
-        "last_date": "2025-08-27T15:00:00",  # extracted from <time> tag or meta
-        "pdf_source": {
-            "pdf_url": "",
-            "parent_urls": ["https://example.com/news.html"]
-        }
-    }
-]
-"""
