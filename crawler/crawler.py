@@ -18,9 +18,6 @@ def crawl_site(seed_url: str, max_depth: int = 1, max_pages: int = 25,
     q = deque([(seed, 0, [])])
     pages_processed = 0
 
-    # Track all parent URLs for PDFs
-    pdf_parents = defaultdict(list)
-
     print(f"[CRAWLER] Starting crawl from: {seed}")
     print(f"[CRAWLER] max_depth={max_depth}, max_pages={max_pages}, delay={delay}, respect_robots={respect_robots}")
 
@@ -91,7 +88,7 @@ def crawl_site(seed_url: str, max_depth: int = 1, max_pages: int = 25,
                             "snippet": pdf_text[:1500],
                             "pdf_source": {
                                 "pdf_url": url,
-                                "parent_urls": parent_urls
+                                "parent_urls": parent_urls  # <-- n-1 pages
                             }
                         })
                     else:
@@ -122,13 +119,18 @@ def crawl_site(seed_url: str, max_depth: int = 1, max_pages: int = 25,
                     is_relevant = check_relevance_with_ai(text, purpose_text)
                     if is_relevant:
                         print(f"[AI] HTML page classified as relevant")
+                        # Store as parent for potential PDFs on this page
                         results.append({
                             "seed": seed,
                             "url": url,
                             "title": title,
                             "content": text,
                             "matched_keywords": "AI-Relevant",
-                            "snippet": text[:1500]
+                            "snippet": text[:1500],
+                            "pdf_source": {
+                                "pdf_url": "",          # Not a PDF itself
+                                "parent_urls": [url]    # This page can be n-1 for its child PDFs
+                            }
                         })
                     else:
                         print(f"[AI] HTML page not relevant: {url}")
@@ -158,3 +160,43 @@ def crawl_site(seed_url: str, max_depth: int = 1, max_pages: int = 25,
 
     print(f"\n[CRAWLER] Finished. Processed {pages_processed} pages. Results found: {len(results)}")
     return results
+
+
+
+
+"""
+will return either :
+    {
+        "seed": "https://example.com",
+        "url": "https://example.com/report.pdf",
+        "title": "PDF Document",
+        "content": "Full extracted text of the PDF...",
+        "matched_keywords": "AI-Relevant",
+        "snippet": "First 1500 characters of PDF text...",
+        "pdf_source": {
+            "pdf_url": "https://example.com/report.pdf",
+            "parent_urls": [
+            "https://example.com/press-release"
+            ]
+        }
+    }
+
+
+
+OR :
+    {
+        "seed": "https://example.com",
+        "url": "https://example.com/press-release",
+        "title": "Press Release Title",
+        "content": "Full extracted text of the HTML page...",
+        "matched_keywords": "AI-Relevant",
+        "snippet": "First 1500 characters of page text...",
+        "pdf_source": {
+            "pdf_url": "",                  # HTML page is not itself a PDF
+            "parent_urls": [
+                "https://example.com/press-release"
+            ]
+        }
+    }
+
+"""
