@@ -3,57 +3,99 @@
 import re
 import streamlit as st
 from typing import List
-from langchain_openai import ChatOpenAI
-from langchain.schema import HumanMessage
+
+from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+from langchain.schema import SystemMessage, HumanMessage
+from langchain_community.vectorstores import FAISS
 from langchain.text_splitter import RecursiveCharacterTextSplitter
+
 from config import CHUNK_SIZE, CHUNK_OVERLAP
 
-# Initialize LangChain's OpenAI wrapper
+# --- LLMs and Embeddings ---
 llm = ChatOpenAI(
     model="gpt-4o-mini",
     temperature=0,
-    api_key=st.secrets["OPENAI_API_KEY"]
+    api_key=st.secrets["OPENAI_API_KEY"],
 )
 
+embeddings = OpenAIEmbeddings(
+    model="text-embedding-3-small",
+    api_key=st.secrets["OPENAI_API_KEY"],
+)
+
+# --- Text splitter ---
 text_splitter = RecursiveCharacterTextSplitter(
     chunk_size=CHUNK_SIZE,
     separators=["\n\n", "\n", ".", "!", "?", ",", " "],
     chunk_overlap=CHUNK_OVERLAP,
 )
 
-def preprocess_text(text: str) -> List[str]:
+# --- Preprocessing ---
+def preprocess_text(text: str):
     """
-    Split text into manageable chunks and lowercase it.
+    Normalize + split text into chunks.
     """
     text = re.sub(r"\s+", " ", text).strip().lower()
-    chunks = text_splitter.split_text(text)
-    return chunks
+    return text_splitter.split_text(text)
 
+# --- Build FAISS retriever ---
+def build_retriever(chunks: List[str]):
+    """
+    Turn chunks into FAISS retriever.
+    """
+    vectorstore = FAISS.from_texts(chunks, embeddings)
+    return vectorstore.as_retriever(search_type="similarity", search_kwargs={"k": 3})
+
+# --- Relevance check with RAG ---
 def check_relevance_with_ai(text: str, purpose: str) -> bool:
     """
-    Use OpenAI via LangChain to decide if a page is relevant for the usecase.
-    Returns True if relevant, False otherwise.
+    Full RAG: 
+    1. Split + embed text into retriever
+    2. Retrieve relevant chunks
+    3. Ask GPT with retrieved context
     """
     chunks = preprocess_text(text)
-    for chunk in chunks:
-        prompt = f"""
-        Contexte : {purpose}
+    if not chunks:
+        return False
 
-        Texte extrait d'une page web : 
-        \"\"\"{chunk}\"\"\"
+    retriever = build_retriever(chunks)
 
-        Question : Ce texte est-il pertinent pour la collecte d'informations financières et patrimoniales telle que décrite dans le contexte ?
+    # Retrieve top chunks for purpose
+    docs = retriever.get_relevant_documents(purpose)
+    if not docs:
+        return False
+
+    system_prompt = SystemMessage(
+        content=f"""
+        Tu es un assistant qui aide à déterminer la pertinence d'un texte
+        pour la collecte d'informations financières et patrimoniales.
+        Critères de pertinence :
+        - si le texte contient des chiffres clés ou du contexte tiré d'un rapport financier
+        - si le texte correspond à un communiqué de presse
+        - si le texte évoque une actualité de l'entreprise
+        Sinon, il n'est pas pertinent.
         Répond uniquement par 'oui' ou 'non'.
         """
-        try:
-            response = llm.invoke([HumanMessage(content=prompt)])
-            answer = response.content.strip().lower()
-            print(chunk[:120], "... =>", answer)  # debug snippet
+    )
 
-            if "oui" in answer:
-                return True
-            # if the first chunk is not relevant, we keep checking others
-        except Exception as e:
-            print("[AI ERROR]", e)
-            continue
-    return False
+    user_prompt = HumanMessage(
+        content=f"""
+        Contexte de recherche : {purpose}
+
+        Voici les extraits de texte retrouvés :
+        {chr(10).join([d.page_content for d in docs])}
+
+        Question : Ce texte est-il pertinent ?
+        Réponds uniquement par "oui" ou "non".
+        """
+    )
+
+    try:
+        response = llm.invoke([system_prompt, user_prompt])
+        answer = response.content.strip().lower()
+        print(f"{docs[0].page_content[:300]} =>", answer)  # debug
+
+        return "oui" in answer or "Oui" in answer
+    except Exception as e:
+        print("[AI ERROR]", e)
+        return FalseR

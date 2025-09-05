@@ -9,3 +9,4 @@ markdown2==2.5.4
 weasyprint==66.0
 langchain-community==0.3.29
 pymupdf==1.26.4
+faiss-cpu==1.12.0

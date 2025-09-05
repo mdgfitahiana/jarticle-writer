@@ -5,7 +5,6 @@ import streamlit.components.v1 as components
 
 from ui.sidebar import render_sidebar
 from utils.check_for_change import check_for_change
-from utils.resouce_table import summarize_content
 from ui.styles import build_html_table, build_body_rows
 
 
@@ -67,23 +66,24 @@ headers = [
 ]
 
 # Recent (changed) table
-with st.spinner("🖊️ Formatage du tableau des changements récents..."):
-    groups_recent = []
-    for seed in seed_urls:
-        resources_for_seed = [r for r in all_resources if r.get("seed") == seed]
-        if resources_for_seed:
-            groups_recent.append({
-                "label": resources_for_seed[0].get("company_name", seed),
-                "rows": resources_for_seed
-            })
+### leave it commented on debugging purpose
+# with st.spinner("🖊️ Formatage du tableau des changements récents..."):
+#     groups_recent = []
+#     for seed in seed_urls:
+#         resources_for_seed = [r for r in all_resources if r.get("seed") == seed]
+#         if resources_for_seed:
+#             groups_recent.append({
+#                 "label": resources_for_seed[0].get("company_name", seed),
+#                 "rows": resources_for_seed
+#             })
 
-    if groups_recent:
-        body_html_recent = build_body_rows(groups_recent, summarize_content, blink=True)
-        table_html_recent = build_html_table(headers, body_html_recent, blink=True)
-        st.subheader("🆕 Derniers changements détectés")
-        components.html(table_html_recent, height=600, scrolling=True)
-    else:
-        st.info("Aucun changement récent détecté.")
+#     if groups_recent:
+#         body_html_recent = build_body_rows(groups_recent, summarize_content, blink=True)
+#         table_html_recent = build_html_table(headers, body_html_recent, blink=True)
+#         st.subheader("🆕 Derniers changements détectés")
+#         components.html(table_html_recent, height=600, scrolling=True)
+#     else:
+#         st.info("Aucun changement récent détecté.")
 
 # Full table
 with st.spinner("🖊️ Construction du tableau complet..."):
@@ -97,7 +97,7 @@ with st.spinner("🖊️ Construction du tableau complet..."):
             "rows": resources_for_seed
         })
 
-    body_html_full = build_body_rows(groups_full, summarize_content, blink=False)
+    body_html_full = build_body_rows(groups_full, blink=False)
     table_html_full = build_html_table(headers, body_html_full, blink=False)
     st.subheader("📚 Tableau complet des ressources")
     components.html(table_html_full, height=800, scrolling=True)

@@ -9,6 +9,7 @@ from utils.robots_utils import allowed_by_robots
 from utils.parsing import extract_text_and_links, extract_pdf_text
 from utils.ai_relevance import check_relevance_with_ai
 from utils.date_utils import get_date_from_headers, get_date_from_html, get_date_from_text_ai
+from utils.summarizer import summarize_content
 
 def crawl_site(seed_url: str, max_depth: int = 1, max_pages: int = 25,
                delay: float = 0.5, respect_robots: bool = True) -> List[Dict]:
@@ -57,13 +58,17 @@ def crawl_site(seed_url: str, max_depth: int = 1, max_pages: int = 25,
                 ai_date = get_date_from_text_ai(pdf_text)
                 if ai_date != "Non trouvé":
                     last_date = ai_date
+                
+                purpose = """
+                Collecter toutes les informations pertinentes sur l'entreprise, incluant :
+                - Les rapports financiers et résultats (bilans, comptes annuels, chiffres clés),
+                - Les communiqués de presse officiels,
+                - Les actualités importantes concernant l'entreprise (nouveaux partenariats, fusions, acquisitions, changements dans la direction, etc.).
+                Répondre uniquement si le texte est pertinent pour ces critères.
+                """
 
-                is_relevant = check_relevance_with_ai(pdf_text, """
-                    Classifier le document PDF parmi :
-                    - Rapport financier (annuel, trimestriel, résultats)
-                    - Communiqué de presse
-                    - Document non pertinent
-                """)
+                is_relevant = check_relevance_with_ai(pdf_text, purpose=purpose)
+              
 
                 if is_relevant:
                     results.append({
@@ -74,6 +79,7 @@ def crawl_site(seed_url: str, max_depth: int = 1, max_pages: int = 25,
                         "matched_keywords": "AI-Relevant",
                         "snippet": pdf_text[:1500],
                         "last_date": last_date,
+                        "summary": summarize_content(pdf_text) if pdf_text else "",
                         "pdf_source": {
                             "pdf_url": url,
                             "parent_urls": parent_urls
@@ -90,14 +96,16 @@ def crawl_site(seed_url: str, max_depth: int = 1, max_pages: int = 25,
                 ai_date = get_date_from_text_ai(text)
                 if ai_date != "Non trouvé":
                     last_date = ai_date
+                
+                purpose = """
+                Collecter toutes les informations pertinentes sur l'entreprise, incluant :
+                - Les rapports financiers et résultats (bilans, comptes annuels, chiffres clés),
+                - Les communiqués de presse officiels,
+                - Les actualités importantes concernant l'entreprise (nouveaux partenariats, fusions, acquisitions, changements dans la direction, etc.).
+                Répondre uniquement si le texte est pertinent pour ces critères.
+                """
 
-                is_relevant = check_relevance_with_ai(text, """
-                    Identifier et classifier les informations financières et patrimoniales :
-                    - Rapports financiers annuels/trimestriels
-                    - Communiqués de presse
-                    - Documents financiers pertinents
-                    - Écarter les documents non pertinents
-                """)
+                is_relevant = check_relevance_with_ai(text, purpose=purpose)
 
                 if is_relevant:
                     results.append({
@@ -108,6 +116,7 @@ def crawl_site(seed_url: str, max_depth: int = 1, max_pages: int = 25,
                         "matched_keywords": "AI-Relevant",
                         "snippet": text[:1500],
                         "last_date": last_date,
+                        "summary": summarize_content(text) if text else "",
                         "pdf_source": {
                             "pdf_url": "",           # Not a PDF itself
                             "parent_urls": [url]     # This page can be n-1 for PDFs

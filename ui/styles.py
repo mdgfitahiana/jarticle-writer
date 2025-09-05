@@ -1,3 +1,5 @@
+from utils.summarizer import summarize_content
+
 def build_html_table(headers, body_html, blink=False):
     header_cells = "".join(f"<th>{h}</th>" for h in headers)
 
@@ -66,7 +68,7 @@ def build_html_table(headers, body_html, blink=False):
     """
 
 
-def build_body_rows(groups, summarize_content, blink=False):
+def build_body_rows(groups, blink=False):
     base_url = "http://localhost:8502/"
     body_rows_html = []
 
@@ -75,7 +77,7 @@ def build_body_rows(groups, summarize_content, blink=False):
             first_cell = f'<td rowspan="{len(g["rows"])}">{g["label"]}</td>' if i == 0 else ""
             title = r.get("title", "")
             content = r.get("content", "")
-            content_summary = summarize_content(content) if content else ""
+            content_summary = r.get("summary")
             content_scrollable = f"""
             <div style="max-height: 12rem; max-width: 40rem; overflow: auto; padding: 4px;">
             {content_summary}
