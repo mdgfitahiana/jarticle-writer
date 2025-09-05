@@ -24,6 +24,46 @@ embeddings = OpenAIEmbeddings(
 )
 
 # ------------------------------------------------------------------------------
+
+def extract_financial_sentences(text: str) -> list[str]:
+    """
+    Retourne uniquement les phrases contenant des informations financières,
+    actualités ou communiqués pertinents.
+    """
+    keywords = [
+        # Finance / Comptabilité
+        "résultat", "bilan", "chiffre", "profit", "perte", "croissance",
+        "CA", "revenu", "recette", "dépense", "bénéfice", "dividende",
+        "marge", "excédent", "déficit", "capitalisation", "valorisation",
+        "milliard", "million", "trimestre", "exercice", "financier",
+
+        # Actualités / Entreprise
+        "nomination", "directeur", "PDG", "CEO", "président", "gouvernance",
+        "partenariat", "contrat", "lancement", "innovation", "stratégie",
+        "plan", "développement", "extension", "croissance externe",
+
+        # Fusions / Acquisitions
+        "acquisition", "fusion", "rachat", "cession", "prise de participation",
+        "joint-venture", "alliance",
+
+        # Marché / Investissements
+        "investissement", "levée de fonds", "financement", "obligation",
+        "action", "bourse", "coté", "IPO", "introduction en bourse",
+        "émission", "titres", "portefeuille",
+
+        # Rapports / Documents
+        "rapport", "communiqué", "publication", "déclaration", "présentation",
+        "note d'information", "document d’enregistrement", "URD", "prospectus",
+        "analyse", "compte rendu",
+
+        # Contexte macro / Risques
+        "inflation", "taux d’intérêt", "marché", "économie", "conjoncture",
+        "risque", "réglementaire", "compliance"
+    ]
+    sentences = re.split(r'(?<=[.!?])\s+', text)
+    return [s for s in sentences if any(k.lower() in s.lower() for k in keywords)]
+
+
 # Preprocess & chunk text
 # ------------------------------------------------------------------------------
 def preprocess_text(text: str) -> List[str]:
@@ -46,6 +86,10 @@ def summarize_content(text: str) -> str:
     Interface unchanged: takes text and returns string summary.
     """
     chunks = preprocess_text(text)
+    filtered_sentences = extract_financial_sentences(text)
+    filtered_text = " ".join(filtered_sentences)
+    #chunks = preprocess_text(filtered_text)
+
     if not chunks:
         return ""
 
@@ -57,14 +101,24 @@ def summarize_content(text: str) -> str:
 
     system_prompt = SystemMessage(
         content="""
-        Tu es un assistant qui résume des textes longs en quelques phrases claires en français.
-        Concentre-toi sur les informations clés et ignorer les détails inutiles.
+        Tu es un assistant spécialisé en analyse financière.
+        Ta tâche est de produire un résumé clair et lisible sous forme de texte continu (pas de puces).
+
+        Structure le résumé en un paragraphe ou deux :
+        - Commence par les actualités importantes de l'entreprise (changements de direction, acquisitions, partenariats…).
+        - Enchaîne avec les résultats financiers et chiffres clés (bénéfices, revenus, prévisions, dividendes…).
+        - Termine par les communiqués officiels publiés (rapports, annonces publiques…).
+
+        Contraintes :
+        - Ignore les phrases vagues, génériques ou marketing.
+        - Ne garde que les faits datés et chiffrés quand c’est possible.
+        - Rédige dans un style journalistique concis et professionnel.
         """
     )
 
     user_prompt = HumanMessage(
         content=f"""
-        Résume le contenu suivant :
+        Résume le contenu suivant en suivant les consignes ci-dessus:
         {chr(10).join([d.page_content for d in docs])}
         """
     )
@@ -72,5 +126,8 @@ def summarize_content(text: str) -> str:
     try:
         response = llm_summarizer.invoke([system_prompt, user_prompt])
         return response.content.strip()
+
+
+        return summary
     except Exception as e:
         return f"[Error summarizing content: {e}]"
