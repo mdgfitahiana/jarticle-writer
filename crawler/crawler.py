@@ -47,10 +47,12 @@ def crawl_site(seed_url: str, max_depth: int = 1, max_pages: int = 25,
                 continue
 
             content_type = resp.headers.get("Content-Type", "").lower()
-
+            print(f"[URL to be crawled] : {url}")
             # ------------------- PDF -------------------
             if is_pdf_url(url, content_type):
+                print(f'[ispdf]: {url}')
                 pdf_bytes = resp.content
+                print(f'[pdf_text: {pdf_text[:200]}')
                 pdf_text = extract_pdf_text(pdf_bytes)
 
                 # --- AI date extraction ---
