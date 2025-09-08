@@ -1,5 +1,3 @@
-from utils.summarizer import summarize_content
-
 def build_html_table(headers, body_html, blink=False):
     header_cells = "".join(f"<th>{h}</th>" for h in headers)
 

@@ -78,7 +78,7 @@ with st.spinner("🖊️ Formatage du tableau des changements récents..."):
             })
 
     if groups_recent:
-        body_html_recent = build_body_rows(groups_recent, summarize_content, blink=True)
+        body_html_recent = build_body_rows(groups_recent, blink=True)
         table_html_recent = build_html_table(headers, body_html_recent, blink=True)
         st.subheader("🆕 Derniers changements détectés")
         components.html(table_html_recent, height=600, scrolling=True)
