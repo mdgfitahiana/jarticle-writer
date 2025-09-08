@@ -44,7 +44,7 @@ def build_retriever(chunks: List[str]):
     Turn chunks into FAISS retriever.
     """
     vectorstore = FAISS.from_texts(chunks, embeddings)
-    return vectorstore.as_retriever(search_type="similarity", search_kwargs={"k": 3})
+    return vectorstore.as_retriever(search_type="similarity", search_kwargs={"k": 5})
 
 # --- Relevance check with RAG ---
 def check_relevance_with_ai(text: str, purpose: str) -> bool:

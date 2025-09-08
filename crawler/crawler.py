@@ -47,12 +47,13 @@ def crawl_site(seed_url: str, max_depth: int = 1, max_pages: int = 25,
                 continue
 
             content_type = resp.headers.get("Content-Type", "").lower()
-            print(f"[URL to be crawled] : {url}")
+            print(f"[DEBUG] URL = {url}, Content-Type = {content_type}")
+
             # ------------------- PDF -------------------
             if is_pdf_url(url, content_type):
-                print(f'[ispdf]: {url}')
+                print(f"[DEBUG] PDF détecté : {url}")
+
                 pdf_bytes = resp.content
-                print(f'[pdf_text: {pdf_text[:200]}')
                 pdf_text = extract_pdf_text(pdf_bytes)
 
                 # --- AI date extraction ---
@@ -60,7 +61,7 @@ def crawl_site(seed_url: str, max_depth: int = 1, max_pages: int = 25,
                 ai_date = get_date_from_text_ai(pdf_text)
                 if ai_date != "Non trouvé":
                     last_date = ai_date
-                
+
                 purpose = """
                 Collecter toutes les informations pertinentes sur l'entreprise, incluant :
                 - Les rapports financiers et résultats (bilans, comptes annuels, chiffres clés),
@@ -70,7 +71,6 @@ def crawl_site(seed_url: str, max_depth: int = 1, max_pages: int = 25,
                 """
 
                 is_relevant = check_relevance_with_ai(pdf_text, purpose=purpose)
-              
 
                 if is_relevant:
                     results.append({
@@ -98,7 +98,7 @@ def crawl_site(seed_url: str, max_depth: int = 1, max_pages: int = 25,
                 ai_date = get_date_from_text_ai(text)
                 if ai_date != "Non trouvé":
                     last_date = ai_date
-                
+
                 purpose = """
                 Collecter toutes les informations pertinentes sur l'entreprise, incluant :
                 - Les rapports financiers et résultats (bilans, comptes annuels, chiffres clés),
