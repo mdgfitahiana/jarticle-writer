@@ -2,6 +2,7 @@
 .venv/
 env/
 venv/
+.env
 
 #Fichiers temporaires Python
 __pycache__/
