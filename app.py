@@ -49,8 +49,8 @@ for i, seed in enumerate(seed_urls, start=1):
             delay=delay,
             respect_robots=respect_robots,
         )
-        # print(changed_resources)
-    # print(changed_resources)
+        print(changed_resources)
+    print(changed_resources)
 
     if changed_resources:
         all_resources.extend(changed_resources)
