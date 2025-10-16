@@ -11,7 +11,7 @@ class Base(DeclarativeBase):
 DIM = get_settings()["embedding_dim"]
 
 class EmbeddingArticle(Base):
-    __tablename__ = "embeddings_financial_articles"
+    __tablename__ = "vector_embeddings"
     __table_args__ = {"schema": "public"}
 
     id: Mapped[str] = mapped_column(
@@ -22,6 +22,7 @@ class EmbeddingArticle(Base):
     title: Mapped[str | None]
     content: Mapped[str]                   # NOT NULL
     embedding: Mapped[list[float]] = mapped_column(Vector(DIM), nullable=False)
+    embedding_dimension: Mapped[int | None] = int(get_settings().get('embedding_dim', 1536))
     source: Mapped[str | None]
     url: Mapped[str | None]
     created_at: Mapped[str] = mapped_column(

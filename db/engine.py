@@ -17,16 +17,43 @@ _SessionLocal: Optional[sessionmaker] = None
 
 
 def _build_connect_args(cfg: dict) -> dict:
-    connect_args = {"sslmode": cfg["sslmode"]}
-    if cfg.get("ca_pem"):
+    """
+    Build psycopg3 connect args with correct SSL semantics.
+
+    QUICK MODE:
+    - If sslmode == 'require', return ONLY {'sslmode': 'require'} and do NOT pass any CA.
+      (Avoids 'certificate verify failed' / psycopg rejecting sslrootcert with 'require'.)
+
+    VERIFYING MODES:
+    - If a PEM is provided (ca_pem), persist to a temp file and pass sslrootcert=<file>.
+    - Else, if a root is provided (sslroot like 'system' or a bundle path) and
+      sslmode is a verifying mode ('verify-full'/'verify-ca'), pass it through.
+    """
+    sslmode = str(cfg.get("sslmode", "")).strip().lower()
+    sslroot = str(cfg.get("sslroot", "")).strip()
+    ca_pem = str(cfg.get("ca_pem", "")).strip()
+
+    # Always include sslmode if provided
+    connect_args: dict = {}
+    if sslmode:
+        connect_args["sslmode"] = sslmode
+
+    # QUICK FIX: for 'require', never pass a CA/root
+    if sslmode == "require":
+        return connect_args
+
+    # Verifying modes only below
+    if ca_pem:
         # Persist CA to a temp file so psycopg can read it
         f = tempfile.NamedTemporaryFile(delete=False, suffix=".crt")
-        f.write(cfg["ca_pem"].encode("utf-8"))
+        f.write(ca_pem.encode("utf-8"))
         f.flush()
         f.close()
         connect_args["sslrootcert"] = f.name
-    else:
-        connect_args["sslrootcert"] = "system"
+    elif sslmode in {"verify-full", "verify-ca"} and sslroot:
+        # e.g., "system" or a path to a CA bundle
+        connect_args["sslrootcert"] = sslroot
+
     return connect_args
 
 
@@ -49,6 +76,8 @@ def get_engine() -> Engine:
     host = cfg["host"]
     port = cfg["port"]
     db = cfg["name"]
+    cfg = get_settings()
+    print("DB SSL cfg:", {"sslmode": cfg["sslmode"], "sslroot": cfg["sslroot"], "has_ca": bool(cfg["ca_pem"])})
 
     if not (host and user and cfg["password"]):
         raise RuntimeError("DB config missing: DATABASE_HOST/USER/PASSWORD")
@@ -69,7 +98,7 @@ def get_engine() -> Engine:
         register_vector(dbapi_conn)
 
     # Ensure the pgvector extension exists (safe to run repeatedly).
-    # If the DB user lacks permission, this will raise—which is usually what you want.
+    # If the DB user lacks permission, this will raise.
     with _engine.begin() as conn:
         conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
 
