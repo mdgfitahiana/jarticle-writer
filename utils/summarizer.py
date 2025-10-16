@@ -99,20 +99,41 @@ def summarize_content(text: str) -> str:
     if not docs:
         return ""
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+######################## prompt
+
+
+
+
+
     system_prompt = SystemMessage(
         content="""
         Tu es un assistant spécialisé en analyse financière.
-        Ta tâche est de produire un résumé clair et lisible sous forme de texte continu (pas de puces).
 
-        Structure le résumé en un paragraphe ou deux :
-        - Commence par les actualités importantes de l'entreprise (changements de direction, acquisitions, partenariats…).
-        - Enchaîne avec les résultats financiers et chiffres clés (bénéfices, revenus, prévisions, dividendes…).
-        - Termine par les communiqués officiels publiés (rapports, annonces publiques…).
+        Ta tâche est de produire un résumé clair, structuré et fluide sous forme de texte continu (pas de puces ni de listes).
+
+        Structure le résumé en un ou deux paragraphes :
+        - Commence par les actualités importantes : changements de direction, acquisitions, partenariats, décisions stratégiques, ou tout autre événement notable (incluant les rapports financiers, investissements en bourse, placements financiers hors bourse, ou investissements immobiliers).
+        - Poursuis avec les résultats et indicateurs financiers clés : bénéfices, revenus, prévisions, dividendes, impôts, et autres données chiffrées pertinentes issues des rapports ou analyses financières.
+        - Termine par les éléments officiels et institutionnels : communiqués de presse, rapports publics, annonces réglementaires, ou informations relatives à la succession et à la donation s’il y a lieu.
 
         Contraintes :
-        - Ignore les phrases vagues, génériques ou marketing.
-        - Ne garde que les faits datés et chiffrés quand c’est possible.
-        - Rédige dans un style journalistique concis et professionnel.
+        - Ignore les phrases vagues, génériques ou promotionnelles.
+        - Ne conserve que les faits datés, chiffrés ou documentés.
+        - Adopte un style journalistique professionnel, concis et objectif.
         """
     )
 

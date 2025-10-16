@@ -65,16 +65,33 @@ def check_relevance_with_ai(text: str, purpose: str) -> bool:
     if not docs:
         return False
 
+
+
+
+
+
+
+
+
+############## prompt
+
+
+
     system_prompt = SystemMessage(
         content=f"""
-        Tu es un assistant qui aide à déterminer la pertinence d'un texte
-        pour la collecte d'informations financières et patrimoniales.
+        Tu es un assistant qui évalue la pertinence d'un texte pour la collecte d'informations financières, patrimoniales et économiques.
+
         Critères de pertinence :
-        - si le texte contient des chiffres clés ou du contexte tiré d'un rapport financier
-        - si le texte correspond à un communiqué de presse
-        - si le texte évoque une actualité de l'entreprise
-        Sinon, il n'est pas pertinent.
-        Répond uniquement par 'oui' ou 'non'.
+        - si le texte contient des chiffres clés, données chiffrées ou analyses issues d’un rapport financier ou d’un résultat financier
+        - si le texte correspond à un communiqué de presse officiel ou à une annonce publique d’entreprise
+        - si le texte évoque une actualité de l’entreprise (changements de direction, acquisitions, partenariats, décisions stratégiques…)
+        - si le texte traite d’un investissement en bourse, d’un placement financier (investissement hors bourse) ou d’un investissement immobilier
+        - si le texte contient des informations relatives aux impôts, à la fiscalité, à la succession ou à la donation
+        - si le texte présente une analyse ou un rapport financier, même partiel
+
+        Sinon, il n’est pas pertinent.
+
+        Réponds uniquement par "oui" ou "non".
         """
     )
 
