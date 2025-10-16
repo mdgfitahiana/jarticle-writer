@@ -10,6 +10,8 @@ from utils.parsing import extract_text_and_links, extract_pdf_text
 from utils.ai_relevance import check_relevance_with_ai
 from utils.date_utils import get_date_from_headers, get_date_from_html, get_date_from_text_ai
 from utils.summarizer import summarize_content
+from utils.pdf_title_utils import get_title_from_pdf_bytes
+import requests
 
 def crawl_site(seed_url: str, max_depth: int = 1, max_pages: int = 25,
                delay: float = 0.5, respect_robots: bool = True) -> List[Dict]:
@@ -72,11 +74,24 @@ def crawl_site(seed_url: str, max_depth: int = 1, max_pages: int = 25,
 
                 is_relevant = check_relevance_with_ai(pdf_text, purpose=purpose)
 
+
+                # ... inside your loop, before building the results dict:
+                try:
+                    resp = requests.get(url, timeout=20)
+                    resp.raise_for_status()
+                    pdf_bytes = resp.content
+                    pdf_title = get_title_from_pdf_bytes(pdf_bytes, max_pages=3)
+                except Exception:
+                    pdf_title = "PDF Document"  # fallback
+
+                # Now use the detected title (with a safe fallback)
+                title_value = pdf_title if pdf_title and pdf_title != "Non trouvé" else "PDF Document"
+
                 if is_relevant:
                     results.append({
                         "seed": seed,
                         "url": url,
-                        "title": "PDF Document",
+                        "title": title_value,
                         "content": pdf_text,
                         "matched_keywords": "AI-Relevant",
                         "snippet": pdf_text[:1500],
@@ -88,6 +103,24 @@ def crawl_site(seed_url: str, max_depth: int = 1, max_pages: int = 25,
                         }
                     })
                 pages_processed += 1
+
+
+                # if is_relevant:
+                #     results.append({
+                #         "seed": seed,
+                #         "url": url,
+                #         "title": "PDF Document",
+                #         "content": pdf_text,
+                #         "matched_keywords": "AI-Relevant",
+                #         "snippet": pdf_text[:1500],
+                #         "last_date": last_date,
+                #         "summary": summarize_content(pdf_text) if pdf_text else "",
+                #         "pdf_source": {
+                #             "pdf_url": url,
+                #             "parent_urls": parent_urls
+                #         }
+                #     })
+                # pages_processed += 1
 
             # ------------------- HTML -------------------
             elif "html" in content_type:
