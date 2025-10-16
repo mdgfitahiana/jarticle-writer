@@ -88,7 +88,8 @@ def summarize_content(text: str) -> str:
     chunks = preprocess_text(text)
     filtered_sentences = extract_financial_sentences(text)
     filtered_text = " ".join(filtered_sentences)
-    #chunks = preprocess_text(filtered_text)
+    # comment the next line if needed
+    chunks = preprocess_text(filtered_text)
 
     if not chunks:
         return ""
